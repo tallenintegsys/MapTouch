@@ -2,8 +2,8 @@ package biz.integsys.maptouch;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
+import android.graphics.Point;
+import android.location.Location;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,18 +18,19 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.SnapshotReadyCallback {
 
     private final String TAG = "MapsActivity";
     private GoogleMap mMap;
+    private Bitmap snapshot;
     private BitmapDescriptor mBitmapDescriptor;
-    private GoogleMap.OnMapClickListener mOnMapClickListener = new GoogleMap.OnMapClickListener() {
+    private final GoogleMap.OnMapClickListener mOnMapClickListener = new GoogleMap.OnMapClickListener() {
         @Override
         public void onMapClick(LatLng latLng) {
             Log.i(TAG, latLng.toString());
         }
     };
-    private GoogleMap.OnMarkerDragListener mOnMarkerDragListener = new GoogleMap.OnMarkerDragListener() {
+    private final GoogleMap.OnMarkerDragListener mOnMarkerDragListener = new GoogleMap.OnMarkerDragListener() {
         @Override
         public void onMarkerDragStart(Marker marker) {
 
@@ -37,12 +38,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         public void onMarkerDrag(Marker marker) {
+            /* XXX need to work out haptic or aural feedback so user can feel/hear geographic and
+            political boundaries */
+            Point p = mMap.getProjection().toScreenLocation(
+                    new LatLng(marker.getPosition().latitude,marker.getPosition().longitude));
+            int brightness = snapshot.getPixel(p.x,p.y) & 0x00ffffff;  //vaguely
+            //XXX play a tone, vibrate for boundary colours subject to UAT
             Log.i(TAG, marker.getPosition().toString());
         }
 
         @Override
         public void onMarkerDragEnd(Marker marker) {
-
+            //XXX RG and TTS the result
         }
     };
 
@@ -56,8 +63,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
 
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.map_marker);
-        Bitmap scalledBitmap = Bitmap.createScaledBitmap(bitmap, 2048, 2048, false);
-        mBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(scalledBitmap);
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, 2048, 2048, false);
+        mBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(scaledBitmap);
     }
 
 
@@ -87,6 +94,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMapClickListener(mOnMapClickListener);
         mMap.setOnMarkerDragListener(mOnMarkerDragListener);
         mMap.getUiSettings().setScrollGesturesEnabled(false);
+        mMap.snapshot(this);
+
+    }
+
+    public void onSnapshotReady(Bitmap snapshot) {
+        this.snapshot = snapshot;
 
     }
 }
