@@ -3,9 +3,8 @@ package biz.integsys.maptouch;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
-import android.location.Location;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -33,7 +32,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final GoogleMap.OnMarkerDragListener mOnMarkerDragListener = new GoogleMap.OnMarkerDragListener() {
         @Override
         public void onMarkerDragStart(Marker marker) {
-
+            takeSnapshot();
         }
 
         @Override
@@ -44,7 +43,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     new LatLng(marker.getPosition().latitude,marker.getPosition().longitude));
             int brightness = snapshot.getPixel(p.x,p.y) & 0x00ffffff;  //vaguely
             //XXX play a tone, vibrate for boundary colours subject to UAT
-            Log.i(TAG, marker.getPosition().toString());
+            Log.i(TAG, marker.getPosition().toString()+"   color " + brightness);
         }
 
         @Override
@@ -88,14 +87,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         markerOptions.draggable(true);
         markerOptions.icon(mBitmapDescriptor);
         markerOptions.anchor(0.5f, 0.5f);
-        //markerOptions.alpha(0.0f);
+        markerOptions.alpha(0.1f);
+
         mMap.addMarker(markerOptions);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
         mMap.setOnMapClickListener(mOnMapClickListener);
         mMap.setOnMarkerDragListener(mOnMarkerDragListener);
         mMap.getUiSettings().setScrollGesturesEnabled(false);
-        mMap.snapshot(this);
+    }
 
+    protected void takeSnapshot() {
+        mMap.snapshot(this);
     }
 
     public void onSnapshotReady(Bitmap snapshot) {
